@@ -7,7 +7,7 @@
 . /etc/rc.d/init.d/functions
 PROG_NAME="ams-consumerd"
 DAEMON_PATH="/usr/bin/ams-consumerd"
-CONFIG="/tmp/config"
+CONFIG="config/ams-consumer.conf"
 NN="$(which tr) '\n' '\0'"
 
 
