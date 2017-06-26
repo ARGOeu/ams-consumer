@@ -1,4 +1,4 @@
-import ConfigParser, os, re, ast
+import ConfigParser, os, re
 
 #import ipdb
 
@@ -40,7 +40,7 @@ class AmsConsumerConfig:
         if re.match("^\d+$", value):
             return int(value)
         elif value == 'True' or value == 'False':
-            return ast.literal_eval(value)
+            return eval(value)
         elif re.search(",| ", value):
             orig_array = filter(None, re.split(",| ", value))
             new_array = []
