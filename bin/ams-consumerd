@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, hashlib, time, syslog
+import sys, os, hashlib, time
 import daemon
 import daemon.pidlockfile
 import argparse
@@ -9,21 +9,48 @@ import errno
 
 import ipdb
 
-#from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from datetime import datetime
+from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from ams_consumer.Logger import Logger
+from ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_library import ArgoMessagingService, AmsMessage, AmsException
 
-pid_dir = '/var/run/ams-consumer/'
-log_file = '/tmp/fajla'
+PROG_NAME = 'ams-consumer'
+TIMEOUT = 10
+pid_dir = '/var/run/' + PROG_NAME + '/'
+log_dir = '/var/log/' + PROG_NAME + '/'
+#log_file = '/tmp/fajla'
 
 
-def doMainProgram(fh):
-    #ams_config = AmsConsumerConfig(conf_file)
-    #ams_config.parse()
-    #print ams_config.getOption(ams_config.AMS, 'Token')
+def doMainProgram(messagesConsumed = 0):
+    config = singleton.getConfig()
+    log = singleton.getLog()
+    ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
+                               token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
+                               project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
+    pullInterval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
+    subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
+    msgNum = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+    singleton.setLastStatTime(datetime.now())
+    ackIds = []
+
     while True:
-        time.sleep(5)
-        syslog.syslog("vrti se demon" )
+        #for sub in subscriptions:
+        for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
+            ackIds.append(id)
+            singleton.incrementMsgCount()
+            log.info(msg.json())
+        #syslog.syslog("vrti se demon" )
         #fh.write(ams_config.getOption(ams_config.OUTPUT, ErrorFilename))
+        if ackIds:
+            ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
+            ackIds = []
 
+       # ipdb.set_trace()
+
+        time.sleep(pullInterval)
+
+        log.info('Vrti se svakijeh 3 sec')
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
@@ -37,18 +64,31 @@ def startDaemon(context_daemon):
                 if(e.errno == errno.ESRCH):
                     context_daemon.pidfile.break_lock()
 
-    fh = open(log_file, 'a')
-    fh.write("inicijalizacija\n")
-    context_daemon.files_preserve = [fh]
+    #fh = open(log_file, 'a')
+    #fh.write("inicijalizacija\n")
+    context_daemon.files_preserve = [singleton.getLog().fileloghandle]
 
     def handleSigUsr1(signum, frame):
-        syslog.syslog("signal usr1 ufacen.." + fh.name + "--\n")
-        fh.write("SIG1 uvacen\n")
-        fh.flush()
+        singleton.getLog().info('SIG USR1 caught.')
+        #singleton.getLog().info('frejmovaca::' + str(frame.f_locals['ackIds']))
+
+        singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
+                 singleton.getMsgConsumed())
+        singleton.resetCounters()
+        #syslog.syslog("signal usr1 ufacen.." + fh.name + "--\n")
+        #fh.write("SIG1 uvacen\n")
+        #fh.flush()
        # return 0
 
     def handleSigTerm(signum, frame):
-        syslog.syslog("signal TERM uvacen")
+        # check if all pulled messages are acknowledged
+        frameVars = frame.f_locals
+        if 'ackIds' in frameVars and frameVars['ackIds']:
+            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=TIMEOUT )
+
+        singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
+                 singleton.getMsgConsumed())
+        singleton.getLog().info('SIG TERM caught.')
         context_daemon.terminate(signum, frame)
 
     context_daemon.signal_map = {
@@ -57,7 +97,7 @@ def startDaemon(context_daemon):
     }
 
     with context_daemon:
-        doMainProgram(fh)
+        doMainProgram()
 
 
 def stopDaemon(context_daemon):
@@ -87,16 +127,11 @@ def statusDaemon(context_daemon):
 
 
 def calcPidName(config_file):
-    #if not os.path.isfile(config_file):
-    #    print "no sac fajl"
-    #    raise SystemExit(2)
-    try:
-        fh = open(config_file, 'r')
-    except IOError, e:
-        print e.strerror + config_file
+    if not os.path.isfile(config_file):
+        print "No such file", config_file
         raise SystemExit(2)
-    hash_obj = hashlib.md5(fh.read())   #ipdb.set_trace()
-    fh.close()
+
+    hash_obj = hashlib.md5(config_file)   #ipdb.set_trace()
     pid_name = 'amsconsd_' + hash_obj.hexdigest()[0:8] + '.pid'
 
     return pid_name
@@ -123,7 +158,7 @@ def daemonize(args):
         raise SystemExit(ret)
 
 def main():
-    parser = argparse.ArgumentParser(prog='ams-consumerd')
+    parser = argparse.ArgumentParser(prog=PROG_NAME + 'd')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-n', dest='nofork', action='store_true',
                         help='do not fork into background')
@@ -132,9 +167,18 @@ def main():
     parser.add_argument('-c', dest='config', type=str, required=True, help='config file')
     args = parser.parse_args()
 
+    ac_config = AmsConsumerConfig(args.config)
+    ac_config.parse()
+    log_name = ac_config.getOption(AmsConsumerConfig.GENERAL, 'LogName')
+
+    logger = Logger(sys.argv[0], log_name, log_dir)
+
+    global singleton
+    singleton = SharedSingleton(ac_config, logger)
+
     if args.nofork:
         try:
-            doMainProgram(args.config)
+            doMainProgram()
         except KeyboardInterrupt:
             raise SystemExit(1)
 
