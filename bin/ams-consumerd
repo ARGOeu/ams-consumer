@@ -9,24 +9,48 @@ import errno
 
 import ipdb
 
+from datetime import datetime
 from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 from ams_consumer.Logger import Logger
 from ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_library import ArgoMessagingService, AmsMessage, AmsException
 
 PROG_NAME = 'ams-consumer'
+TIMEOUT = 10
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
 #log_file = '/tmp/fajla'
 
 
-def doMainProgram():
-    #print ams_config.getOption(ams_config.AMS, 'Token')
+def doMainProgram(messagesConsumed = 0):
+    config = singleton.getConfig()
+    log = singleton.getLog()
+    ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
+                               token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
+                               project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
+    pullInterval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
+    subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
+    msgNum = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+    singleton.setLastStatTime(datetime.now())
+    ackIds = []
+
     while True:
-        time.sleep(5)
+        #for sub in subscriptions:
+        for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
+            ackIds.append(id)
+            singleton.incrementMsgCount()
+            log.info(msg.json())
         #syslog.syslog("vrti se demon" )
         #fh.write(ams_config.getOption(ams_config.OUTPUT, ErrorFilename))
-        singleton.getLog().info('Vrti se svakijeh 5 sec')
+        if ackIds:
+            ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
+            ackIds = []
 
+       # ipdb.set_trace()
+
+        time.sleep(pullInterval)
+
+        log.info('Vrti se svakijeh 3 sec')
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
@@ -46,14 +70,25 @@ def startDaemon(context_daemon):
 
     def handleSigUsr1(signum, frame):
         singleton.getLog().info('SIG USR1 caught.')
+        #singleton.getLog().info('frejmovaca::' + str(frame.f_locals['ackIds']))
+
+        singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
+                 singleton.getMsgConsumed())
+        singleton.resetCounters()
         #syslog.syslog("signal usr1 ufacen.." + fh.name + "--\n")
         #fh.write("SIG1 uvacen\n")
         #fh.flush()
        # return 0
 
     def handleSigTerm(signum, frame):
+        # check if all pulled messages are acknowledged
+        frameVars = frame.f_locals
+        if 'ackIds' in frameVars and frameVars['ackIds']:
+            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=TIMEOUT )
+
+        singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
+                 singleton.getMsgConsumed())
         singleton.getLog().info('SIG TERM caught.')
-        #syslog.syslog("signal TERM uvacen")
         context_daemon.terminate(signum, frame)
 
     context_daemon.signal_map = {
@@ -143,7 +178,7 @@ def main():
 
     if args.nofork:
         try:
-            doMainProgram(args.config)
+            doMainProgram()
         except KeyboardInterrupt:
             raise SystemExit(1)
 
