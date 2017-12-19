@@ -1,4 +1,5 @@
 from datetime import datetime
+from threading import Event
 
 class SharedSingleton(object):
     """
@@ -8,30 +9,29 @@ class SharedSingleton(object):
     _sharedObj = None
     _msgConsumed = 0
     _lastStatTime = None
+    _eventSigUsr1 = None
+    _eventSigTerm = None
 
     def __new__(cls, *args, **kwargs):
         if not getattr(cls, '_sharedObj', False):
             setattr(cls, '_sharedObj', object.__new__(cls))
         return cls._sharedObj
 
-    def __init__(self, config, logger):
-        if not getattr(self.__class__, '_config', False):
-            self._config = config
-        if not getattr(self.__class__, '_logger', False):
-            self._logger = logger
-        self.resetCounters()
+    def __init__(self, config = None, logger = None):
+        if(config and logger):
+            if not getattr(self.__class__, '_config', False):
+                self._config = config
+            if not getattr(self.__class__, '_logger', False):
+                self._logger = logger
+            self.resetCounters()
+            self._eventSigUsr1 = Event()
+            self._eventSigTerm = Event()
 
     def getLog(self):
         return self._logger.get()
 
     def getConfig(self):
         return self._config
-
-    def setAttr(self, attr, value):
-        setattr(self.__class__, attr, value)
-
-    def getAttr(self, attr):
-        getattr(self.__class__, attr, None)
 
     def incrementMsgCount(self):
         self._msgConsumed += 1
@@ -48,3 +48,10 @@ class SharedSingleton(object):
     def resetCounters(self):
         self._msgConsumed = 0
         self._lastStatTime = datetime.now()
+
+    def getEventSigUsr1(self):
+        return self._eventSigUsr1
+
+    def getEventSigTerm(self):
+        return self._eventSigTerm
+
