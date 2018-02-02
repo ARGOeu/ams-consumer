@@ -15,6 +15,7 @@ from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 from ams_consumer.Logger import Logger
 from ams_consumer.SharedSingleton import SharedSingleton
 from ams_consumer.ReportThread import ReportThread
+from ams_consumer.AvroWriter import AvroWriter
 from argo_ams_library import ArgoMessagingService, AmsMessage, AmsException
 
 PROG_NAME = 'ams-consumer'
@@ -37,13 +38,21 @@ def doMainProgram():
     reportThread.start()
 
     while True:
+        avroMsg = {}
         #for sub in subscriptions:
         for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
             ackIds.append(id)
             singleton.incrementMsgCount()
             log.info(msg.json())
-        #syslog.syslog("vrti se demon" )
-        #fh.write(ams_config.getOption(ams_config.OUTPUT, ErrorFilename))
+            msgDate = msg.get_attr()['partition_date']
+            if not msgDate in avroMsg:
+                avroMsg[msgDate] = list()
+            avroMsg[msgDate].append(msg.get_data())
+
+        avroWriter = AvroWriter()
+        avroWriter.processMessages(avroMsg)
+        #ipdb.set_trace()
+
         if ackIds:
             ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
             ackIds = []

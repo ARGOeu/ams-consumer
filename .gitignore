@@ -1,2 +1,3 @@
 .ropeproject/
 pymod/*.pyc
+config/ams-consumer.conf
