@@ -37,6 +37,8 @@ def doMainProgram():
     reportThread = ReportThread()
     reportThread.start()
 
+    avroWriter = AvroWriter()
+
     while True:
         avroMsg = {}
         #for sub in subscriptions:
@@ -49,18 +51,14 @@ def doMainProgram():
                 avroMsg[msgDate] = list()
             avroMsg[msgDate].append(msg.get_data())
 
-        avroWriter = AvroWriter()
-        avroWriter.processMessages(avroMsg)
         #ipdb.set_trace()
+        avroWriter.processMessages(avroMsg)
 
         if ackIds:
             ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
             ackIds = []
 
-       # ipdb.set_trace()
-
         time.sleep(pullInterval)
-        log.info('Vrti se svakijeh 3 sec')
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
