@@ -6,6 +6,7 @@ from avro.io import DatumWriter, BinaryEncoder, BinaryDecoder, DatumReader
 from ams_consumer.SharedSingleton import SharedSingleton
 from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 from io import BytesIO
+from datetime import datetime, timedelta
 
 class AvroWriter:
 
@@ -54,7 +55,15 @@ class AvroWriter:
 
 
     def getFileWriter(self, datum):
-        avroFilename = self._filename.replace('DATE', datum)
+        msgDate = datetime.strptime(datum, '%Y-%m-%d')
+        today = datetime.today()
+
+        if(msgDate + timedelta(days=self._config.getOption(AmsConsumerConfig.MSG_RETENTION, 'PastDaysOk')) > today
+           and msgDate - timedelta(days=self._config.getOption(AmsConsumerConfig.MSG_RETENTION, 'FutureDaysOk')) < today):
+            avroFilename = self._filename.replace('DATE', datum)
+        else:
+            avroFilename = self._errorFile.replace('DATE', datum)
+
         if os.path.exists(avroFilename):
             self._avroFile = open(avroFilename, 'a+')
             writer = DataFileWriter(self._avroFile, DatumWriter())
