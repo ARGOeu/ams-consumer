@@ -12,7 +12,7 @@ class ReportThread(threading.Thread):
     def run(self):
         singleton = SharedSingleton()
         while True:
-            reportPeriod = singleton.getLastStatTime() + timedelta(seconds = singleton.getConfig().getOption(AmsConsumerConfig.GENERAL, 'ReportWritMsgEveryHours'))
+            reportPeriod = singleton.getLastStatTime() + timedelta(hours = singleton.getConfig().getOption(AmsConsumerConfig.GENERAL, 'ReportWritMsgEveryHours'))
             if(datetime.now() > reportPeriod):
                 singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
                      singleton.getMsgConsumed())
