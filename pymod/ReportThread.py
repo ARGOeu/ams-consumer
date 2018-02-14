@@ -2,6 +2,7 @@ import threading, time
 
 from datetime import datetime, timedelta
 from ams_consumer.SharedSingleton import SharedSingleton
+from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 
 class ReportThread(threading.Thread):
 
@@ -11,8 +12,8 @@ class ReportThread(threading.Thread):
     def run(self):
         singleton = SharedSingleton()
         while True:
-            hour24 = singleton.getLastStatTime() + timedelta(days = 1)
-            if(datetime.now() > hour24):
+            reportPeriod = singleton.getLastStatTime() + timedelta(hours = singleton.getConfig().getOption(AmsConsumerConfig.GENERAL, 'ReportWritMsgEveryHours'))
+            if(datetime.now() > reportPeriod):
                 singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
                      singleton.getMsgConsumed())
                 singleton.resetCounters()
@@ -25,7 +26,6 @@ class ReportThread(threading.Thread):
             if(singleton.getEventSigUsr1().isSet()):
                 singleton.getLog().info(singleton.getLastStatTime().strftime('Since %Y-%m-%d %H:%M:%S messages consumed: %i') %
                      singleton.getMsgConsumed())
-                singleton.resetCounters()
                 singleton.getEventSigUsr1().clear()
 
             #singleton.getLog().info('tredovaca ljuta')
