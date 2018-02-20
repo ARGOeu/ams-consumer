@@ -35,28 +35,33 @@ def doMainProgram():
     singleton.setLastStatTime(datetime.now())
     ackIds = []
     reportThread = ReportThread()
+    reportThread.daemon = True
     reportThread.start()
 
     avroWriter = AvroWriter()
 
     while True:
         avroMsg = {}
-        #for sub in subscriptions:
-        for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
-            ackIds.append(id)
-            singleton.incrementMsgCount()
-            log.info(msg.json())
-            msgDate = msg.get_attr()['partition_date']
-            if not msgDate in avroMsg:
-                avroMsg[msgDate] = list()
-            avroMsg[msgDate].append(msg.get_data())
+        try:
+            #for sub in subscriptions:
+            for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
+                ackIds.append(id)
+                singleton.incrementMsgCount()
+                log.info(msg.json())
+                msgDate = msg.get_attr()['partition_date']
+                if not msgDate in avroMsg:
+                    avroMsg[msgDate] = list()
+                avroMsg[msgDate].append(msg.get_data())
 
-        #ipdb.set_trace()
-        avroWriter.processMessages(avroMsg)
+            #ipdb.set_trace()
+            avroWriter.processMessages(avroMsg)
 
-        if ackIds:
-            ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
-            ackIds = []
+            if ackIds:
+                ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
+                ackIds = []
+
+        except AmsException as e:
+            log.error(e)
 
         time.sleep(pullInterval)
 
