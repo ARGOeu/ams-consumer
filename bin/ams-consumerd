@@ -80,7 +80,7 @@ def startDaemon(context_daemon):
     context_daemon.files_preserve = [singleton.getLog().fileloghandle]
 
     def handleSigUsr1(signum, frame):
-        singleton.getLog().info('SIG USR1 caught.')
+        singleton.getLog().info('SIGUSR1 caught.')
         singleton.getEventSigUsr1().set()
 
     def handleSigTerm(signum, frame):
@@ -90,7 +90,7 @@ def startDaemon(context_daemon):
             frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=TIMEOUT)
 
         singleton.getEventSigTerm().set()
-        singleton.getLog().info('SIG TERM caught.')
+        singleton.getLog().info('SIGTERM caught.')
         context_daemon.terminate(signum, frame)
 
     context_daemon.signal_map = {
