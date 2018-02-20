@@ -28,7 +28,6 @@ class ReportThread(threading.Thread):
                      singleton.getMsgConsumed())
                 singleton.getEventSigUsr1().clear()
 
-            #singleton.getLog().info('tredovaca ljuta')
             time.sleep(1)
 
 

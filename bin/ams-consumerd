@@ -20,7 +20,7 @@ import daemon
 import daemon.pidlockfile
 
 PROG_NAME = 'ams-consumer'
-TIMEOUT = 10
+TIMEOUT = 180
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
 
