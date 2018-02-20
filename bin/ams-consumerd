@@ -2,8 +2,11 @@
 
 import argparse
 import errno
+import hashlib
+import os
 import signal
-import sys, os, hashlib, time
+import sys
+import time
 
 from datetime import datetime
 from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
@@ -20,6 +23,7 @@ PROG_NAME = 'ams-consumer'
 TIMEOUT = 10
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
+
 
 def doMainProgram():
     config = singleton.getConfig()
@@ -44,9 +48,9 @@ def doMainProgram():
             for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
                 ackIds.append(id)
                 singleton.incrementMsgCount()
-                log.info(msg.json())
+                # log.info(msg.json())
                 msgDate = msg.get_attr()['partition_date']
-                if not msgDate in avroMsg:
+                if msgDate not in avroMsg:
                     avroMsg[msgDate] = list()
                 avroMsg[msgDate].append(msg.get_data())
 
@@ -60,6 +64,7 @@ def doMainProgram():
             log.error(e)
 
         time.sleep(pullInterval)
+
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
@@ -90,7 +95,7 @@ def startDaemon(context_daemon):
 
     context_daemon.signal_map = {
         signal.SIGUSR1: handleSigUsr1,
-        signal.SIGTERM: handleSigTerm #'terminate'
+        signal.SIGTERM: handleSigTerm
     }
 
     with context_daemon:
