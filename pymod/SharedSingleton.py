@@ -1,6 +1,7 @@
 from datetime import datetime
 from threading import Event
 
+
 class SharedSingleton(object):
     """
         Singleton object used to store configuration options and
@@ -17,11 +18,11 @@ class SharedSingleton(object):
             setattr(cls, '_sharedObj', object.__new__(cls))
         return cls._sharedObj
 
-    def __init__(self, config = None, logger = None):
-        if(config and logger):
-            if not getattr(self.__class__, '_config', False):
+    def __init__(self, config=None, logger=None):
+        if config and logger:
+            if not getattr(self, '_config', False):
                 self._config = config
-            if not getattr(self.__class__, '_logger', False):
+            if not getattr(self, '_logger', False):
                 self._logger = logger
             self.resetCounters()
             self._eventSigUsr1 = Event()
@@ -54,4 +55,3 @@ class SharedSingleton(object):
 
     def getEventSigTerm(self):
         return self._eventSigTerm
-
