@@ -7,33 +7,33 @@
 . /etc/rc.d/init.d/functions
 PROG_NAME="ams-consumerd"
 DAEMON_PATH="/usr/bin/ams-consumerd"
-CONFIG="config/ams-consumer.conf"
+CONFIG="/etc/ams-consumer/ams-consumer.conf"
 
 
 case "$1" in
 start)
-	echo -n $"Starting $PROG_NAME: "
+	echo $"Starting $PROG_NAME: "
 	msg=$(daemon $DAEMON_PATH -d start -c $CONFIG)
 	retval=$?
 	echo $msg
 	exit $retval
 ;;
 stop)
-	echo -n $"Stopping $PROG_NAME: "
+	echo $"Stopping $PROG_NAME: "
 	msg=$(daemon $DAEMON_PATH -d stop -c $CONFIG)
 	retval=$?
 	echo $msg
 	exit $retval
 ;;
 restart)
-	echo -n $"Restarting $PROG_NAME: "
+	echo $"Restarting $PROG_NAME: "
 	msg=$(daemon $DAEMON_PATH -d restart -c $CONFIG)
 	retval=$?
 	echo $msg
 	exit $retval
 ;;
 status)
-	echo -n $"Status $PROG_NAME: "
+	echo $"Status $PROG_NAME: "
 	msg=$(daemon $DAEMON_PATH -d status -c $CONFIG)
 	retval=$?
 	echo $msg
