@@ -1,27 +1,29 @@
 #!/usr/bin/env python
 
-import sys, os, hashlib, time
+import argparse
+import errno
+import hashlib
+import os
+import signal
+import sys
+import time
+
+from datetime import datetime
+from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from argo_ams_consumer.Logger import Logger
+from argo_ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_consumer.ReportThread import ReportThread
+from argo_ams_consumer.AvroWriter import AvroWriter
+from argo_ams_library import ArgoMessagingService, AmsException
+
 import daemon
 import daemon.pidlockfile
-import argparse
-import signal
-import errno
-import threading
 
-import ipdb
-
-from datetime import datetime, timedelta
-from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
-from ams_consumer.Logger import Logger
-from ams_consumer.SharedSingleton import SharedSingleton
-from ams_consumer.ReportThread import ReportThread
-from ams_consumer.AvroWriter import AvroWriter
-from argo_ams_library import ArgoMessagingService, AmsMessage, AmsException
-
-PROG_NAME = 'ams-consumer'
-TIMEOUT = 10
+PROG_NAME = 'argo-ams-consumer'
+TIMEOUT = 180
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
+
 
 def doMainProgram():
     config = singleton.getConfig()
@@ -35,30 +37,34 @@ def doMainProgram():
     singleton.setLastStatTime(datetime.now())
     ackIds = []
     reportThread = ReportThread()
+    reportThread.daemon = True
     reportThread.start()
 
     avroWriter = AvroWriter()
 
     while True:
         avroMsg = {}
-        #for sub in subscriptions:
-        for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
-            ackIds.append(id)
-            singleton.incrementMsgCount()
-            log.info(msg.json())
-            msgDate = msg.get_attr()['partition_date']
-            if not msgDate in avroMsg:
-                avroMsg[msgDate] = list()
-            avroMsg[msgDate].append(msg.get_data())
+        try:
+            for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
+                ackIds.append(id)
+                singleton.incrementMsgCount()
+                # log.info(msg.json())
+                msgDate = msg.get_attr()['partition_date']
+                if msgDate not in avroMsg:
+                    avroMsg[msgDate] = list()
+                avroMsg[msgDate].append(msg.get_data())
 
-        #ipdb.set_trace()
-        avroWriter.processMessages(avroMsg)
+            avroWriter.processMessages(avroMsg)
 
-        if ackIds:
-            ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
-            ackIds = []
+            if ackIds:
+                ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
+                ackIds = []
+
+        except AmsException as e:
+            log.error(e)
 
         time.sleep(pullInterval)
+
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
@@ -68,37 +74,28 @@ def startDaemon(context_daemon):
                 os.kill(int(pid), 0)
                 return 1
             except OSError, e:
-                # no such process
                 if(e.errno == errno.ESRCH):
                     context_daemon.pidfile.break_lock()
 
-    #fh = open(log_file, 'a')
-    #fh.write("inicijalizacija\n")
     context_daemon.files_preserve = [singleton.getLog().fileloghandle]
 
     def handleSigUsr1(signum, frame):
-        singleton.getLog().info('SIG USR1 caught.')
+        singleton.getLog().info('SIGUSR1 caught.')
         singleton.getEventSigUsr1().set()
-        #singleton.getLog().info('frejmovaca::' + str(frame.f_locals['ackIds']))
-
-        #syslog.syslog("signal usr1 ufacen.." + fh.name + "--\n")
-        #fh.write("SIG1 uvacen\n")
-        #fh.flush()
-       # return 0
 
     def handleSigTerm(signum, frame):
         # check if all pulled messages are acknowledged
         frameVars = frame.f_locals
         if 'ackIds' in frameVars and frameVars['ackIds']:
-            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=TIMEOUT )
+            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=TIMEOUT)
 
         singleton.getEventSigTerm().set()
-        singleton.getLog().info('SIG TERM caught.')
+        singleton.getLog().info('SIGTERM caught.')
         context_daemon.terminate(signum, frame)
 
     context_daemon.signal_map = {
         signal.SIGUSR1: handleSigUsr1,
-        signal.SIGTERM: handleSigTerm #'terminate'
+        signal.SIGTERM: handleSigTerm
     }
 
     with context_daemon:
@@ -136,7 +133,7 @@ def calcPidName(config_file):
         print "No such file", config_file
         raise SystemExit(2)
 
-    hash_obj = hashlib.md5(config_file)   #ipdb.set_trace()
+    hash_obj = hashlib.md5(config_file)
     pid_name = 'amsconsd_' + hash_obj.hexdigest()[0:8] + '.pid'
 
     return pid_name

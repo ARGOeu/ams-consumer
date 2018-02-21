@@ -1,8 +1,9 @@
-import ConfigParser, os, re
+import ConfigParser
+import os
+import re
+import sys
 
-#import ipdb
-
-class AmsConsumerConfig:
+class AmsConsumerConfig(object):
 
     GENERAL = 'General'
     AMS = 'AMS'
@@ -13,11 +14,10 @@ class AmsConsumerConfig:
         self._filename = configFile
         self._options = {}
 
-
     def parse(self):
         config = ConfigParser.ConfigParser()
         if not os.path.exists(self._filename):
-            #self.logger.error('Could not find %s' % self._filename)
+            sys.stderr.write('%s does not exist\n' % self._filename)
             raise SystemExit(1)
         config.read(self._filename)
 
@@ -28,8 +28,6 @@ class AmsConsumerConfig:
                 new_value = self._getCorrectOptionValueType(value)
                 self._options[key].update({option: new_value})
 
-       #ipdb.set_trace()
-
     def getOption(self, section, option):
         return self.getSection(section)[option.lower()]
 
@@ -37,7 +35,7 @@ class AmsConsumerConfig:
         return self._options[section.lower()]
 
     def _getCorrectOptionValueType(self, value):
-        if re.match("^\d+$", value):
+        if re.match(r"^\d+$", value):
             return int(value)
         elif value == 'True' or value == 'False':
             return eval(value)

@@ -3,8 +3,8 @@ import avro.schema
 
 from avro.datafile import DataFileWriter
 from avro.io import DatumWriter, BinaryEncoder, BinaryDecoder, DatumReader
-from ams_consumer.SharedSingleton import SharedSingleton
-from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from argo_ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 from io import BytesIO
 from datetime import datetime, timedelta
 
@@ -18,7 +18,9 @@ class AvroWriter:
 
 
     def __init__(self):
-        self._config = SharedSingleton().getConfig()
+        self._shared = SharedSingleton()
+        self._config = self._shared.getConfig()
+        self._log = self._shared.getLog()
         self._filename = (self._config.getOption(AmsConsumerConfig.OUTPUT, 'Directory') + '/' +
                         self._config.getOption(AmsConsumerConfig.OUTPUT, 'Filename'))
 
@@ -44,7 +46,8 @@ class AvroWriter:
             f = open(schemaFile)
             self._schema = avro.schema.parse(f.read())
         except Exception as e:
-            raise e
+            self._log.error(e)
+            raise SystemExit(1)
 
 
     def deserialize(self, message):

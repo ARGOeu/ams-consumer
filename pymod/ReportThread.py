@@ -1,8 +1,8 @@
 import threading, time
 
 from datetime import datetime, timedelta
-from ams_consumer.SharedSingleton import SharedSingleton
-from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from argo_ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 
 class ReportThread(threading.Thread):
 
@@ -28,7 +28,6 @@ class ReportThread(threading.Thread):
                      singleton.getMsgConsumed())
                 singleton.getEventSigUsr1().clear()
 
-            #singleton.getLog().info('tredovaca ljuta')
             time.sleep(1)
 
 
