@@ -7,7 +7,7 @@
 . /etc/rc.d/init.d/functions
 PROG_NAME="ams-consumerd"
 DAEMON_PATH="/usr/bin/ams-consumerd"
-CONFIG="/etc/ams-consumer/ams-consumer.conf"
+CONFIG="/etc/argo-ams-consumer/ams-consumer.conf"
 
 
 case "$1" in

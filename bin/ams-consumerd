@@ -19,7 +19,7 @@ from argo_ams_library import ArgoMessagingService, AmsException
 import daemon
 import daemon.pidlockfile
 
-PROG_NAME = 'ams-consumer'
+PROG_NAME = 'argo-ams-consumer'
 TIMEOUT = 180
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
