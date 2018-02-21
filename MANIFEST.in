@@ -3,4 +3,4 @@ include config/*.conf
 include config/*.avsc
 include init/*
 include pymod/*.py
-include ams-consumer.spec
+include argo-ams-consumer.spec

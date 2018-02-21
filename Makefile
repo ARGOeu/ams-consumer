@@ -1,4 +1,4 @@
-PKGNAME=ams-consumer
+PKGNAME=argo-ams-consumer
 SPECFILE=${PKGNAME}.spec
 
 PKGVERSION=$(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
