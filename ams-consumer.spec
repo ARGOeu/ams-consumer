@@ -1,19 +1,19 @@
 Name: ams-consumer
-Summary: A/R Comp Engine message consumer
+Summary: Argo Messaging System metric results consumer
 Version: 0.1.0
 Release: 1%{?dist}
 License: ASL 2.0
 Buildroot: %{_tmppath}/%{name}-buildroot
-Group:     EGI/SA4
 BuildArch: noarch
 Source0:   %{name}-%{version}.tar.gz
+BuildRequires: python2-devel
 Requires: avro
 Requires: argo-ams-library
 Requires: python-daemon
 
 %description
-Installs the service for consuming SAM monitoring results
-from the EGI message broker infrastructure.
+AMS consumer fetchs metric results from Argo Messaging System and stores them
+in avro serialized files
 
 %build
 python setup.py build
