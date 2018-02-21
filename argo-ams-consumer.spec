@@ -1,3 +1,7 @@
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+
+%define underscore() %(echo %1 | sed 's/-/_/g')
+
 Name:          argo-ams-consumer
 Summary:       Argo Messaging System metric results consumer
 Version:       0.1.0
@@ -23,10 +27,12 @@ python setup.py build
 %setup -n %{name}-%{version}
 
 %install 
-python setup.py install -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+%{__python} setup.py install --skip-build --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 install --directory %{buildroot}/etc/init.d
 install --directory %{buildroot}/etc/argo-ams-consumer/
 install --directory %{buildroot}/%{_sharedstatedir}/argo-ams-consumer/
+install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/run/%{name}/
+install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -35,6 +41,10 @@ install --directory %{buildroot}/%{_sharedstatedir}/argo-ams-consumer/
 %attr(0755,root,root) /usr/bin/ams-consumerd
 %attr(0755,root,root) /etc/init.d/ams-consumer
 %attr(0750,root,root) %{_sharedstatedir}/argo-ams-consumer
+%dir %{python_sitelib}/%{underscore %{name}}
+%{python_sitelib}/%{underscore %{name}}/*.py[co]
+%dir %{_localstatedir}/log/%{name}/
+%dir %{_localstatedir}/run/%{name}/
 
 %post
 /sbin/chkconfig --add ams-consumer
