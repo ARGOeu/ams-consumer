@@ -9,11 +9,11 @@ import sys
 import time
 
 from datetime import datetime
-from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
-from ams_consumer.Logger import Logger
-from ams_consumer.SharedSingleton import SharedSingleton
-from ams_consumer.ReportThread import ReportThread
-from ams_consumer.AvroWriter import AvroWriter
+from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from argo_ams_consumer.Logger import Logger
+from argo_ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_consumer.ReportThread import ReportThread
+from argo_ams_consumer.AvroWriter import AvroWriter
 from argo_ams_library import ArgoMessagingService, AmsException
 
 import daemon

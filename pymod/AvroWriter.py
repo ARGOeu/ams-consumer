@@ -3,8 +3,8 @@ import avro.schema
 
 from avro.datafile import DataFileWriter
 from avro.io import DatumWriter, BinaryEncoder, BinaryDecoder, DatumReader
-from ams_consumer.SharedSingleton import SharedSingleton
-from ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from argo_ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 from io import BytesIO
 from datetime import datetime, timedelta
 
