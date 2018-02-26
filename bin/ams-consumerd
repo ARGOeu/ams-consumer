@@ -20,7 +20,6 @@ import daemon
 import daemon.pidlockfile
 
 PROG_NAME = 'argo-ams-consumer'
-TIMEOUT = 180
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
 
@@ -34,6 +33,9 @@ def doMainProgram():
     pullInterval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
     subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
     msgNum = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+
+    global timeout
+    timeout = config.getOption(AmsConsumerConfig.GENERAL, 'ConnectionTimeout')
     singleton.setLastStatTime(datetime.now())
     ackIds = []
     reportThread = ReportThread()
@@ -45,7 +47,7 @@ def doMainProgram():
     while True:
         avroMsg = {}
         try:
-            for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=TIMEOUT):
+            for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=timeout):
                 ackIds.append(id)
                 singleton.incrementMsgCount()
                 # log.info(msg.json())
@@ -57,7 +59,7 @@ def doMainProgram():
             avroWriter.processMessages(avroMsg)
 
             if ackIds:
-                ams.ack_sub(subscriptions, ackIds, timeout=TIMEOUT)
+                ams.ack_sub(subscriptions, ackIds, timeout=timeout)
                 ackIds = []
 
         except AmsException as e:
@@ -87,7 +89,7 @@ def startDaemon(context_daemon):
         # check if all pulled messages are acknowledged
         frameVars = frame.f_locals
         if 'ackIds' in frameVars and frameVars['ackIds']:
-            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=TIMEOUT)
+            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=timeout)
 
         singleton.getEventSigTerm().set()
         singleton.getLog().info('SIGTERM caught.')
