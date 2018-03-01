@@ -22,7 +22,7 @@ import daemon.pidlockfile
 PROG_NAME = 'argo-ams-consumer'
 pid_dir = '/var/run/' + PROG_NAME + '/'
 log_dir = '/var/log/' + PROG_NAME + '/'
-
+timeout = None
 
 def doMainProgram():
     config = singleton.getConfig()
@@ -88,8 +88,9 @@ def startDaemon(context_daemon):
     def handleSigTerm(signum, frame):
         # check if all pulled messages are acknowledged
         frameVars = frame.f_locals
-        if 'ackIds' in frameVars and frameVars['ackIds']:
-            frameVars['ams'].ack_sub(frameVars['subscriptions'], frameVars['ackIds'], timeout=timeout)
+        ackIds = frameVars.get('ackIds')
+        if ackIds:
+            frameVars['ams'].ack_sub(frameVars['subscriptions'], ackIds, timeout=timeout)
 
         singleton.getEventSigTerm().set()
         singleton.getLog().info('SIGTERM caught.')
