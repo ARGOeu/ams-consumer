@@ -1,1 +1,1 @@
-# ams-consumer
+# argo-ams-consumer
