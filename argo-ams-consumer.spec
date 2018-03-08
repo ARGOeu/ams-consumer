@@ -1,11 +1,18 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 %define underscore() %(echo %1 | sed 's/-/_/g')
+%define stripc() %(echo %1 | sed 's/el7.centos/el7/')
+
+%if 0%{?el7:1}
+%define mydist %{stripc %{dist}}
+%else
+%define mydist %{dist}
+%endif
 
 Name:          argo-ams-consumer
 Summary:       Argo Messaging System metric results consumer
 Version:       0.1.0
-Release:       1%{?dist}
+Release:       1%{?mydist}
 License:       ASL 2.0
 
 BuildArch:     noarch
