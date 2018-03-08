@@ -10,7 +10,7 @@
 %endif
 
 Name:          argo-ams-consumer
-Summary:       Argo Messaging System metric results consumer
+Summary:       Argo Messaging Service metric results consumer
 Version:       0.1.0
 Release:       1%{?mydist}
 License:       ASL 2.0
@@ -21,10 +21,18 @@ Buildroot:     %{_tmppath}/%{name}-buildroot
 Requires:      argo-ams-library
 Requires:      avro
 Requires:      python-daemon
+
+%if 0%{?el7:1}
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+Requires(post): systemd-sysv
+%endif
+
 Source0:       %{name}-%{version}.tar.gz
 
 %description
-AMS consumer fetchs metric results from Argo Messaging System and stores them
+AMS consumer fetchs metric results from Argo Messaging Service and stores them
 in avro serialized files
 
 %build
