@@ -68,12 +68,20 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 %endif
 
 %post
+%if 0%{?el7:1}
+%systemd_post ams-consumer.service
+%else
 /sbin/chkconfig --add ams-consumer
+%endif
 
 %preun
 if [ "$1" = 0 ] ; then
+%if 0%{?el7:1}
+	 %systemd_preun ams-consumer.service
+%else
    /sbin/service ams-consumer stop
    /sbin/chkconfig --del ams-consumer
+%endif
 fi
 
 %changelog
