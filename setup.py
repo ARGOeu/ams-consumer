@@ -1,6 +1,14 @@
 from distutils.core import setup
+import platform
 
 NAME = 'argo-ams-consumer'
+
+def is_c7():
+    dist = platform.dist()
+    for e in dist:
+        if e.startswith('7'):
+            return True
+    return False
 
 def get_ver():
     try:
@@ -22,6 +30,6 @@ setup(
     description='argo-ams-consumer fetchs metric result messages from Argo Messaging System',
     data_files=[('/etc/argo-ams-consumer', ['config/ams-consumer.conf', 'config/metric_data.avsc']),
                 ('/usr/bin/', ['bin/ams-consumerd']),
-                ('/etc/init.d/', ['init/ams-consumer']),
-                ('/usr/lib/systemd/system/', ['init/ams-consumer.service'])]
+                ('/usr/lib/systemd/system/', ['init/ams-consumer.service']) if is_c7() else \
+                ('/etc/init.d/', ['init/ams-consumer'])]
 )

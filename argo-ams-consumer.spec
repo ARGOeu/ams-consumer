@@ -36,6 +36,7 @@ AMS consumer fetchs metric results from Argo Messaging Service and stores them
 in avro serialized files
 
 %build
+env
 python setup.py build
 
 %prep
@@ -47,14 +48,6 @@ install --directory %{buildroot}/etc/%{name}/
 install --directory %{buildroot}/%{_sharedstatedir}/%{name}/
 install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/run/%{name}/
 install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
-
-%if 0%{?el7:1}
-sed -i "/\/etc\/init.d\/ams-consumer/d" INSTALLED_FILES
-rm %{buildroot}/etc/init.d/ams-consumer
-%else
-sed -i "/\/usr\/lib\/systemd\/system\//d" INSTALLED_FILES
-rm %{buildroot}/usr/lib/systemd/system/ams-consumer.service 
-%endif
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
