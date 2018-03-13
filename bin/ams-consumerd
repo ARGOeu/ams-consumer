@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import daemon
 import errno
 import hashlib
 import os
@@ -16,8 +17,10 @@ from argo_ams_consumer.ReportThread import ReportThread
 from argo_ams_consumer.AvroWriter import AvroWriter
 from argo_ams_library import ArgoMessagingService, AmsException
 
-import daemon
-import daemon.pidlockfile
+try:
+    import daemon.pidlockfile as pidlockfile
+except ImportError:
+    import daemon.pidfile as pidlockfile
 
 PROG_NAME = 'argo-ams-consumer'
 pid_dir = '/var/run/' + PROG_NAME + '/'
@@ -148,7 +151,7 @@ def daemonize(args):
     pid_fullname = pid_dir + calcPidName(args.config)
 
     context_daemon = daemon.DaemonContext()
-    context_daemon.pidfile = daemon.pidlockfile.PIDLockFile(pid_fullname, threaded=False)
+    context_daemon.pidfile = pidlockfile.PIDLockFile(pid_fullname, threaded=False)
 
     if args.daemon == 'start':
         startDaemon(context_daemon)

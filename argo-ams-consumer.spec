@@ -1,11 +1,18 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 %define underscore() %(echo %1 | sed 's/-/_/g')
+%define stripc() %(echo %1 | sed 's/el7.centos/el7/')
+
+%if 0%{?el7:1}
+%define mydist %{stripc %{dist}}
+%else
+%define mydist %{dist}
+%endif
 
 Name:          argo-ams-consumer
-Summary:       Argo Messaging System metric results consumer
+Summary:       Argo Messaging Service metric results consumer
 Version:       0.1.0
-Release:       1%{?dist}
+Release:       1%{?mydist}
 License:       ASL 2.0
 
 BuildArch:     noarch
@@ -14,13 +21,22 @@ Buildroot:     %{_tmppath}/%{name}-buildroot
 Requires:      argo-ams-library
 Requires:      avro
 Requires:      python-daemon
+
+%if 0%{?el7:1}
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+Requires(post): systemd-sysv
+%endif
+
 Source0:       %{name}-%{version}.tar.gz
 
 %description
-AMS consumer fetchs metric results from Argo Messaging System and stores them
+AMS consumer fetchs metric results from Argo Messaging Service and stores them
 in avro serialized files
 
 %build
+env
 python setup.py build
 
 %prep
@@ -28,7 +44,6 @@ python setup.py build
 
 %install 
 %{__python} setup.py install --skip-build --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
-install --directory %{buildroot}/etc/init.d
 install --directory %{buildroot}/etc/%{name}/
 install --directory %{buildroot}/%{_sharedstatedir}/%{name}/
 install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/run/%{name}/
@@ -39,7 +54,6 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 
 %files -f INSTALLED_FILES
 %attr(0755,root,root) /usr/bin/ams-consumerd
-%attr(0755,root,root) /etc/init.d/ams-consumer
 %attr(0750,root,root) %{_sharedstatedir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/ams-consumer.conf 
 %dir %{python_sitelib}/%{underscore %{name}}
@@ -47,13 +61,27 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 %dir %{_localstatedir}/log/%{name}/
 %dir %{_localstatedir}/run/%{name}/
 
+%if 0%{?el7:1}
+%{_unitdir}/ams-consumer.service
+%else
+%attr(0755,root,root) /etc/init.d/ams-consumer
+%endif
+
 %post
+%if 0%{?el7:1}
+%systemd_post ams-consumer.service
+%else
 /sbin/chkconfig --add ams-consumer
+%endif
 
 %preun
 if [ "$1" = 0 ] ; then
+%if 0%{?el7:1}
+	 %systemd_preun ams-consumer.service
+%else
    /sbin/service ams-consumer stop
    /sbin/chkconfig --del ams-consumer
+%endif
 fi
 
 %changelog
