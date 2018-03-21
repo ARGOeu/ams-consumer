@@ -179,7 +179,7 @@ def main():
     ac_config.parse()
     log_name = ac_config.getOption(AmsConsumerConfig.GENERAL, 'LogName')
 
-    logger = Logger(sys.argv[0], log_name, log_dir)
+    logger = Logger(log_name, log_dir)
 
     global singleton
     singleton = SharedSingleton(ac_config, logger)
