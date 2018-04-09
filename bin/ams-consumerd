@@ -33,14 +33,14 @@ def doMainProgram():
     ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
                                token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
                                project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
-    pullInterval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
+    pull_interval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
     subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
-    msgNum = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
-    conn_nretry = config.getOption(AmsConsumerConfig.GENERAL, 'ConnectionRetry')
-    conn_retrysleep = config.getOption(AmsConsumerConfig.GENERAL, 'ConnectionRetrySleep')
+    msg_num = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+    pull_nretry = config.getOption(AmsConsumerConfig.AMS , 'PullRetry')
+    pull_retrysleep = config.getOption(AmsConsumerConfig.AMS , 'PullRetrySleep')
 
     global timeout
-    timeout = config.getOption(AmsConsumerConfig.GENERAL, 'ConnectionTimeout')
+    timeout = config.getOption(AmsConsumerConfig.AMS, 'ConnectionTimeout')
     singleton.setLastStatTime(datetime.now())
     ackIds = []
     reportThread = ReportThread()
@@ -53,7 +53,7 @@ def doMainProgram():
     while True:
         avroMsg = {}
         try:
-            for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=timeout):
+            for id, msg in ams.pull_sub(subscriptions, msg_num, True, timeout=timeout):
                 ackIds.append(id)
                 singleton.incrementMsgCount()
                 # log.info(msg.json())
@@ -68,17 +68,17 @@ def doMainProgram():
                 ams.ack_sub(subscriptions, ackIds, timeout=timeout)
                 ackIds = []
 
-            time.sleep(pullInterval)
+            time.sleep(pull_interval)
             i = 0
 
         except AmsException as e:
-            if i == conn_retrysleep:
+            if i == pull_retrysleep:
                 log.error('Giving up')
                 raise SystemExit(1)
             else:
                 i += 1
                 log.warning('Retry %d after %d sleeping - %s' % (i, timeout, repr(e)))
-                time.sleep(conn_retrysleep)
+                time.sleep(pull_retrysleep)
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
