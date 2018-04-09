@@ -31,7 +31,9 @@ For its functioning, component depends on:
 
 ## Configuration
 
-Configuration is done in one file `ams-consumer.conf` that is splitted in several sections.
+Configuration is done in one file `ams-consumer.conf` that is splitted in several sections, `[General]`, `[AMS]`, `[MsgRetention]`, `[Output]`.
+
+### General
 
 	[General]
 	LogName = argo-ams-consumer
@@ -41,3 +43,26 @@ Configuration is done in one file `ams-consumer.conf` that is splitted in severa
 * `Logname` defines name of `argo-ams-consumer` tenant instance appearing in logs
 * `ReportWritMsgEveryHours` for given number of hours instruct component to report how many messages it fetched. Number will be reported in log files.
 * `AvroSchema` defines the format of messages (fields and values)
+
+### AMS
+
+	[AMS]
+	Host = messaging-devel.argo.grnet.gr
+	Project = EGI
+	Token = EGITOKEN
+	Subscriptions = sub1
+	PullMsgs = 100
+	PullIntervalSec = 3
+	ConnectionTimeout = 180
+	PullRetry = 5
+	PullRetrySleep = 60
+
+* `Host` is FQDN of Argo Messaging Service instance
+* `Project` represents tenant within Argo Messaging Service
+* `Subscription` is the name of bucket containing metric results of interest
+* `Token` is authorization credential needed for pull operation on subscription
+* `PullMsgs` is a number of messages that will be fetched in single request
+* `PullIntervalSec` is interval between two pull requests
+* `ConnectionTimeout` represents time window within that request must be served
+* `PullRetry` is number of retries for a single pull request that may fail because of connection problems and other hiccups that may occur
+* `PullRetrySleep` represents time in seconds after next pull will be tried 
