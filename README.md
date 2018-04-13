@@ -13,7 +13,7 @@ Component is supported on Centos 6 and Centos 7. RPM packages and all needed dep
 	yum install -y argo-ams-consumer 
 
 For its functioning, component depends on:
-- `argo-ams-library` - interaction with ARGO Messaging 
+- `argo-ams-library` - interaction with ARGO Messaging Service 
 - `avro` - avro serialization of messages' payload
 - `python-argparse` - ease build and parse of command line arguments
 - `python-daemon` - ease daemonizing of component 
@@ -66,3 +66,37 @@ Configuration is done in one file `ams-consumer.conf` that is splitted in severa
 * `ConnectionTimeout` represents time window within that request must be served
 * `PullRetry` is number of retries for a single pull request that may fail because of connection problems and other hiccups that may occur
 * `PullRetrySleep` represents time in seconds after next pull will be tried 
+
+### MsgRetention
+
+Section defines the time window within the messages will be considered valid and fetched from subscription.
+
+	[MsgRetention]
+	PastDaysOk = 3
+	FutureDaysOk = 1
+
+* `PastDaysOk` defines the number of past days 
+* `FutureDaysOk` defines the number of future days to consider
+
+### Output
+
+	[Output]
+	Directory = /var/lib/argo-ams-consumer
+	Filename = argo-consumer_log_DATE.avro
+	ErrorFilename = argo-consumer_error_log_DATE.avro
+
+* `Directory` is path to directory where avro files with metric results for given day will be stored
+* `Filename` is name of the avro file that will be created for each day. `DATE` is a placeholder in form of `<year>_<month>_<day>`
+* `ErrorFilename` is name of the avro file that will contain metric results fetched outside of allowed message retention defined in previous section 
+
+## Configuration - multitenancy
+
+Each tenant is represented with its own set of metric results meaning that AMS consumer needs to be configured with their specific subscription and different output directory where their data will be stored. Consumer is functioning as a unix service and multiple instances of it can be spawned if consumer is started with _different_ config file, each tied to specific tenant. Name of pid file created for each instance of consumer is tied to filename of passed config and multiple instances of consumer with the _same_ config file will be prevented. So if one wants to spawn a new consumer for new tenant, procedure is this:
+1) created separate config file `/etc/argo-ams-consumer/ams-consumer-tenant.conf` with changed settings in `[AMS]` and `[Output]` section at least:
+	- change `Project`, `Subscription`, `Token`
+	- change output directory to `/var/lib/argo-ams-consumer-tenant/` that needs to be manually created before
+2) for Centos7, create a new init/unit service file `/usr/lib/systemd/system/ams-consumer-tenant.service` with passed newly created config file:
+	- change `ExecStart` and `ExecStop` to point to new configuration, for example `ExecStart=/usr/bin/ams-consumerd -d start -c /etc/argo-ams-consumer/ams-consumer-tenat.conf`
+	- reload SystemD configuration to register new service unit file `systemctl daemon-reload` 
+
+For Centos 6, similar steps goes with its init file `/etc/init.d/ams-consumer`. 
