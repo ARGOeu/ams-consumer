@@ -72,7 +72,7 @@ def doMainProgram():
             i = 0
 
         except AmsException as e:
-            if i == pull_retrysleep:
+            if i == pull_nretry:
                 log.error('Giving up')
                 raise SystemExit(1)
             else:
