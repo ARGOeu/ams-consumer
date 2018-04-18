@@ -5,7 +5,6 @@ from argo_ams_consumer.SharedSingleton import SharedSingleton
 from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 
 class ReportThread(threading.Thread):
-
     def __init__(self):
         threading.Thread.__init__(self, name='stat_report_thread')
 

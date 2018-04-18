@@ -23,10 +23,12 @@ Requires:      avro
 Requires:      python-daemon
 
 %if 0%{?el7:1}
-Requires(post): systemd
-Requires(preun): systemd
+Requires(post):   systemd
+Requires(preun):  systemd
 Requires(postun): systemd
-Requires(post): systemd-sysv
+Requires(post):   systemd-sysv
+%else
+Requires:         python-argparse
 %endif
 
 Source0:       %{name}-%{version}.tar.gz

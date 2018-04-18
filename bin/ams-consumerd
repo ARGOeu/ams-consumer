@@ -33,12 +33,14 @@ def doMainProgram():
     ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
                                token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
                                project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
-    pullInterval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
+    pull_interval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
     subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
-    msgNum = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+    msg_num = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+    pull_nretry = config.getOption(AmsConsumerConfig.AMS , 'PullRetry')
+    pull_retrysleep = config.getOption(AmsConsumerConfig.AMS , 'PullRetrySleep')
 
     global timeout
-    timeout = config.getOption(AmsConsumerConfig.GENERAL, 'ConnectionTimeout')
+    timeout = config.getOption(AmsConsumerConfig.AMS, 'ConnectionTimeout')
     singleton.setLastStatTime(datetime.now())
     ackIds = []
     reportThread = ReportThread()
@@ -47,10 +49,11 @@ def doMainProgram():
 
     avroWriter = AvroWriter()
 
+    i = 0
     while True:
         avroMsg = {}
         try:
-            for id, msg in ams.pull_sub(subscriptions, msgNum, True, timeout=timeout):
+            for id, msg in ams.pull_sub(subscriptions, msg_num, True, timeout=timeout):
                 ackIds.append(id)
                 singleton.incrementMsgCount()
                 # log.info(msg.json())
@@ -65,11 +68,17 @@ def doMainProgram():
                 ams.ack_sub(subscriptions, ackIds, timeout=timeout)
                 ackIds = []
 
+            time.sleep(pull_interval)
+            i = 0
+
         except AmsException as e:
-            log.error(e)
-
-        time.sleep(pullInterval)
-
+            if i == pull_nretry:
+                log.error('Giving up')
+                raise SystemExit(1)
+            else:
+                i += 1
+                log.warning('Retry %d after %d sleeping - %s' % (i, pull_retrysleep, repr(e)))
+                time.sleep(pull_retrysleep)
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
@@ -179,7 +188,7 @@ def main():
     ac_config.parse()
     log_name = ac_config.getOption(AmsConsumerConfig.GENERAL, 'LogName')
 
-    logger = Logger(sys.argv[0], log_name, log_dir)
+    logger = Logger(log_name, log_dir)
 
     global singleton
     singleton = SharedSingleton(ac_config, logger)
