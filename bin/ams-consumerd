@@ -33,7 +33,7 @@ def doMainProgram():
     ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
                                token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
                                project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
-    pull_interval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
+    pull_interval = float(config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec'))
     subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
     msg_num = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
     pull_nretry = config.getOption(AmsConsumerConfig.AMS , 'PullRetry')
