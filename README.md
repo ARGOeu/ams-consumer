@@ -62,7 +62,7 @@ Configuration is done in one file `ams-consumer.conf` that is splitted in severa
 * `Subscription` is the name of bucket containing metric results of interest
 * `Token` is authorization credential needed for pull operation on subscription
 * `PullMsgs` is a number of messages that will be fetched in single request
-* `PullIntervalSec` is interval between two pull requests
+* `PullIntervalSec` is interval between two pull requests and can be specified as fraction of second
 * `ConnectionTimeout` represents time window within that request must be served
 * `PullRetry` is number of retries for a single pull request that may fail because of connection problems and other hiccups that may occur
 * `PullRetrySleep` represents time in seconds after next pull will be tried 
