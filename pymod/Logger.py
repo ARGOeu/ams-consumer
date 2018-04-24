@@ -30,7 +30,7 @@ class Logger(object):
         self._logger.addHandler(sh)
 
     def _init_filelog(self, logfile):
-        lfs = '%(asctime)s %(name)s[%(process)s]: %(levelname)s  - %(message)s'
+        lfs = '%(asctime)s %(name)s[%(process)s]: %(levelname)s - %(message)s'
         lf = logging.Formatter(fmt=lfs, datefmt='%Y-%m-%d %H:%M:%S')
         lv = logging.INFO
 

@@ -33,7 +33,7 @@ def doMainProgram():
     ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
                                token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
                                project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
-    pull_interval = config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec')
+    pull_interval = float(config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec'))
     subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
     msg_num = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
     pull_nretry = config.getOption(AmsConsumerConfig.AMS , 'PullRetry')
@@ -113,6 +113,8 @@ def startDaemon(context_daemon):
         signal.SIGTERM: handleSigTerm
     }
 
+    singleton.getLog().info('Started')
+
     with context_daemon:
         doMainProgram()
 
@@ -122,6 +124,7 @@ def stopDaemon(context_daemon):
         pid = context_daemon.pidfile.read_pid()
         try:
             os.kill(pid, signal.SIGTERM)
+            singleton.getLog().info('Stopping')
         except OSError, e:
             if(e.errno == errno.ESRCH):
                 context_daemon.pidfile.break_lock()
