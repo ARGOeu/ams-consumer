@@ -113,6 +113,8 @@ def startDaemon(context_daemon):
         signal.SIGTERM: handleSigTerm
     }
 
+    singleton.getLog().info('Started')
+
     with context_daemon:
         doMainProgram()
 
@@ -122,6 +124,7 @@ def stopDaemon(context_daemon):
         pid = context_daemon.pidfile.read_pid()
         try:
             os.kill(pid, signal.SIGTERM)
+            singleton.getLog().info('Stopping')
         except OSError, e:
             if(e.errno == errno.ESRCH):
                 context_daemon.pidfile.break_lock()
