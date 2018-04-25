@@ -56,7 +56,7 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 
 %files -f INSTALLED_FILES
 %attr(0755,root,root) /usr/bin/ams-consumerd
-%attr(0750,root,root) %{_sharedstatedir}/%{name}
+%attr(0755,root,root) %{_sharedstatedir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/ams-consumer.conf 
 %dir %{python_sitelib}/%{underscore %{name}}
 %{python_sitelib}/%{underscore %{name}}/*.py[co]
@@ -76,15 +76,25 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/
 /sbin/chkconfig --add ams-consumer
 %endif
 
-%preun
-if [ "$1" = 0 ] ; then
+%postun
 %if 0%{?el7:1}
-	 %systemd_preun ams-consumer.service
+%systemd_postun_with_restart ams-consumer.service
 %else
-   /sbin/service ams-consumer stop
-   /sbin/chkconfig --del ams-consumer
-%endif
+if [ "$1" -ge 2 ] ; then
+	/sbin/service ams-consumer stop
+	/sbin/service ams-consumer start 
 fi
+%endif
+
+%preun
+%if 0%{?el7:1}
+%systemd_preun ams-consumer.service
+%else
+if [ "$1" = 0 ] ; then
+	/sbin/service ams-consumer stop
+	/sbin/chkconfig --del ams-consumer
+fi
+%endif
 
 %changelog
 * Tue Feb 20 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-1%{?dist}
