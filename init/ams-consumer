@@ -1,0 +1,45 @@
+#!/bin/bash
+# ams-consumer daemon
+# chkconfig: 345 20 80
+# description: ams-consumer daemon
+# processname: ams-consumerd  
+
+. /etc/rc.d/init.d/functions
+PROG_NAME="ams-consumerd"
+DAEMON_PATH="/usr/bin/ams-consumerd"
+CONFIG="/etc/argo-ams-consumer/ams-consumer.conf"
+
+
+case "$1" in
+start)
+	echo $"Starting $PROG_NAME: "
+	msg=$(daemon $DAEMON_PATH -d start -c $CONFIG)
+	retval=$?
+	echo $msg
+	exit $retval
+;;
+stop)
+	echo $"Stopping $PROG_NAME: "
+	msg=$(daemon $DAEMON_PATH -d stop -c $CONFIG)
+	retval=$?
+	echo $msg
+	exit $retval
+;;
+restart)
+	echo $"Restarting $PROG_NAME: "
+	msg=$(daemon $DAEMON_PATH -d restart -c $CONFIG)
+	retval=$?
+	echo $msg
+	exit $retval
+;;
+status)
+	echo $"Status $PROG_NAME: "
+	msg=$(daemon $DAEMON_PATH -d status -c $CONFIG)
+	retval=$?
+	echo $msg
+	exit $retval
+;;
+*)
+	echo "Usage: $0 {start|stop|restart|status}"
+	exit 1
+esac

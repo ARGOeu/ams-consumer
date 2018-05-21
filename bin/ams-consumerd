@@ -1,0 +1,209 @@
+#!/usr/bin/env python
+
+import argparse
+import daemon
+import errno
+import hashlib
+import os
+import signal
+import sys
+import time
+
+from datetime import datetime
+from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
+from argo_ams_consumer.Logger import Logger
+from argo_ams_consumer.SharedSingleton import SharedSingleton
+from argo_ams_consumer.ReportThread import ReportThread
+from argo_ams_consumer.AvroWriter import AvroWriter
+from argo_ams_library import ArgoMessagingService, AmsException
+
+try:
+    import daemon.pidlockfile as pidlockfile
+except ImportError:
+    import daemon.pidfile as pidlockfile
+
+PROG_NAME = 'argo-ams-consumer'
+pid_dir = '/var/run/' + PROG_NAME + '/'
+log_dir = '/var/log/' + PROG_NAME + '/'
+timeout = None
+
+def doMainProgram():
+    config = singleton.getConfig()
+    log = singleton.getLog()
+    ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
+                               token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
+                               project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
+    pull_interval = float(config.getOption(AmsConsumerConfig.AMS, 'PullIntervalSec'))
+    subscriptions = config.getOption(AmsConsumerConfig.AMS, 'Subscriptions')
+    msg_num = config.getOption(AmsConsumerConfig.AMS, 'PullMsgs')
+    pull_nretry = config.getOption(AmsConsumerConfig.AMS , 'PullRetry')
+    pull_retrysleep = config.getOption(AmsConsumerConfig.AMS , 'PullRetrySleep')
+
+    global timeout
+    timeout = config.getOption(AmsConsumerConfig.AMS, 'ConnectionTimeout')
+    singleton.setLastStatTime(datetime.now())
+    ackIds = []
+    reportThread = ReportThread()
+    reportThread.daemon = True
+    reportThread.start()
+
+    avroWriter = AvroWriter()
+
+    i = 0
+    while True:
+        avroMsg = {}
+        try:
+            for id, msg in ams.pull_sub(subscriptions, msg_num, True, timeout=timeout):
+                ackIds.append(id)
+                singleton.incrementMsgCount()
+                # log.info(msg.json())
+                msgDate = msg.get_attr()['partition_date']
+                if msgDate not in avroMsg:
+                    avroMsg[msgDate] = list()
+                avroMsg[msgDate].append(msg.get_data())
+
+            avroWriter.processMessages(avroMsg)
+
+            if ackIds:
+                ams.ack_sub(subscriptions, ackIds, timeout=timeout)
+                ackIds = []
+
+            time.sleep(pull_interval)
+            i = 0
+
+        except AmsException as e:
+            if i == pull_nretry:
+                log.error('Giving up')
+                raise SystemExit(1)
+            else:
+                i += 1
+                log.warning('Retry %d after %d sleeping - %s' % (i, pull_retrysleep, repr(e)))
+                time.sleep(pull_retrysleep)
+
+def startDaemon(context_daemon):
+    if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
+        pid = context_daemon.pidfile.read_pid()
+        if pid:
+            try:
+                os.kill(int(pid), 0)
+                return 1
+            except OSError, e:
+                if(e.errno == errno.ESRCH):
+                    context_daemon.pidfile.break_lock()
+
+    context_daemon.files_preserve = [singleton.getLog().fileloghandle]
+
+    def handleSigUsr1(signum, frame):
+        singleton.getLog().info('SIGUSR1 caught.')
+        singleton.getEventSigUsr1().set()
+
+    def handleSigTerm(signum, frame):
+        # check if all pulled messages are acknowledged
+        frameVars = frame.f_locals
+        ackIds = frameVars.get('ackIds')
+        if ackIds:
+            frameVars['ams'].ack_sub(frameVars['subscriptions'], ackIds, timeout=timeout)
+
+        singleton.getEventSigTerm().set()
+        singleton.getLog().info('SIGTERM caught.')
+        context_daemon.terminate(signum, frame)
+
+    context_daemon.signal_map = {
+        signal.SIGUSR1: handleSigUsr1,
+        signal.SIGTERM: handleSigTerm
+    }
+
+    singleton.getLog().info('Started')
+
+    with context_daemon:
+        doMainProgram()
+
+
+def stopDaemon(context_daemon):
+    if context_daemon.pidfile.is_locked():
+        pid = context_daemon.pidfile.read_pid()
+        try:
+            os.kill(pid, signal.SIGTERM)
+            singleton.getLog().info('Stopping')
+        except OSError, e:
+            if(e.errno == errno.ESRCH):
+                context_daemon.pidfile.break_lock()
+
+    return 0
+
+
+def statusDaemon(context_daemon):
+    if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
+        pid = context_daemon.pidfile.read_pid()
+        if pid:
+            try:
+                os.kill(int(pid), signal.SIGUSR1)
+                return 0
+            except OSError, e:
+                # no such process
+                if(e.errno == errno.ESRCH):
+                    return 3
+    return 4
+
+
+def calcPidName(config_file):
+    if not os.path.isfile(config_file):
+        print "No such file", config_file
+        raise SystemExit(2)
+
+    hash_obj = hashlib.md5(config_file)
+    pid_name = 'amsconsd_' + hash_obj.hexdigest()[0:8] + '.pid'
+
+    return pid_name
+
+
+def daemonize(args):
+    if not os.path.isdir(pid_dir):
+        os.makedirs(pid_dir)
+    pid_fullname = pid_dir + calcPidName(args.config)
+
+    context_daemon = daemon.DaemonContext()
+    context_daemon.pidfile = pidlockfile.PIDLockFile(pid_fullname, threaded=False)
+
+    if args.daemon == 'start':
+        startDaemon(context_daemon)
+    elif args.daemon == 'stop':
+        ret = stopDaemon(context_daemon)
+        raise SystemExit(ret)
+    elif args.daemon == 'restart':
+        stopDaemon(context_daemon)
+        startDaemon(context_daemon)
+    elif args.daemon == 'status':
+        ret = statusDaemon(context_daemon)
+        raise SystemExit(ret)
+
+def main():
+    parser = argparse.ArgumentParser(prog=PROG_NAME + 'd')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-n', dest='nofork', action='store_true',
+                        help='do not fork into background')
+    group.add_argument('-d', dest='daemon', type=str,
+                       help='daemon arguments: start, stop, restart, status', metavar='')
+    parser.add_argument('-c', dest='config', type=str, required=True, help='config file')
+    args = parser.parse_args()
+
+    ac_config = AmsConsumerConfig(args.config)
+    ac_config.parse()
+    log_name = ac_config.getOption(AmsConsumerConfig.GENERAL, 'LogName')
+
+    logger = Logger(log_name, log_dir)
+
+    global singleton
+    singleton = SharedSingleton(ac_config, logger)
+
+    if args.nofork:
+        try:
+            doMainProgram()
+        except KeyboardInterrupt:
+            raise SystemExit(1)
+
+    elif args.daemon:
+        daemonize(args)
+
+if __name__ == "__main__":
+    main()
