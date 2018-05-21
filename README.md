@@ -100,3 +100,5 @@ Each tenant is represented with its own set of metric results meaning that AMS c
 	- reload SystemD configuration to register new service unit file `systemctl daemon-reload` 
 
 For Centos 6, similar steps goes with its init file `/etc/init.d/ams-consumer`. 
+
+
