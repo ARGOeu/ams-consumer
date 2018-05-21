@@ -11,7 +11,7 @@
 
 Name:          argo-ams-consumer
 Summary:       Argo Messaging Service metric results consumer
-Version:       0.1.0
+Version:       1.0.0
 Release:       1%{?mydist}
 License:       ASL 2.0
 
@@ -97,5 +97,17 @@ fi
 %endif
 
 %changelog
+* Thu May 10 2018 Daniel Vrcic <dvrcic@srce.hr>, Hrvoje Sute <hsute@srce.hr> - 1.0.0-1%{?dist}
+- ARGO-1106 Pull interval as float
+- ARGO-1092 AMS Consumer README
+- ARGO-1069 AMS Consumer Centos7 support
+- ARGO-1050 Connection timeout as config option 
+- ARGO-869 RPM packaging metadata
+- ARGO-1036 report period fix
+- ARGO-1036 Message retention logic
+- ARGO-790 avro serialization of fetched data
+- ARGO-971 AMS messages fetching loop  
+- ARGO-846 Introduce config parser with template config file 
+- ARGO-845 Daemonize worker process and register signal handlers
 * Tue Feb 20 2018 Daniel Vrcic <dvrcic@srce.hr> - 0.1.0-1%{?dist}
 - RPM package
