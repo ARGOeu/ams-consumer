@@ -8,4 +8,4 @@ ExecStart=/usr/bin/ams-consumerd -d start -c /etc/argo-ams-consumer/ams-consumer
 ExecStop=/usr/bin/ams-consumerd -d stop -c /etc/argo-ams-consumer/ams-consumer.conf 
 
 [Install]
-WantedBy=multi−user.target
+WantedBy=multi-user.target
