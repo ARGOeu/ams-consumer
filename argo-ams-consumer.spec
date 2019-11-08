@@ -11,7 +11,7 @@
 
 Name:          argo-ams-consumer
 Summary:       Argo Messaging Service metric results consumer
-Version:       1.0.0
+Version:       1.1.0
 Release:       1%{?mydist}
 License:       ASL 2.0
 
@@ -97,6 +97,9 @@ fi
 %endif
 
 %changelog
+* Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr>, Konstantinos Kagkelidis <kaggis@gmail.com> - 1.1.0-1%{?dist}
+- Fix dash typo in consumer systemd service file 
+- ARGO-1262 Extend consumer schema with actual_data field
 * Thu May 10 2018 Daniel Vrcic <dvrcic@srce.hr>, Hrvoje Sute <hsute@srce.hr> - 1.0.0-1%{?dist}
 - ARGO-1106 Pull interval as float
 - ARGO-1092 AMS Consumer README
