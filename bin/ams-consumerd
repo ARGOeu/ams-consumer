@@ -72,6 +72,7 @@ def doMainProgram():
             time.sleep(pull_interval)
 
         except AmsException as e:
+            log.error(e)
             log.error('Giving up')
             raise SystemExit(1)
 
