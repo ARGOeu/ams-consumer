@@ -49,14 +49,15 @@ def doMainProgram():
 
     avroWriter = AvroWriter()
 
-    i = 0
     while True:
         avroMsg = {}
         try:
-            for id, msg in ams.pull_sub(subscriptions, msg_num, True, timeout=timeout):
+            for id, msg in ams.pull_sub(subscriptions, msg_num,
+                                        retry=pull_nretry,
+                                        retrysleep=pull_retrysleep,
+                                        timeout=timeout):
                 ackIds.append(id)
                 singleton.incrementMsgCount()
-                # log.info(msg.json())
                 msgDate = msg.get_attr()['partition_date']
                 if msgDate not in avroMsg:
                     avroMsg[msgDate] = list()
@@ -69,16 +70,11 @@ def doMainProgram():
                 ackIds = []
 
             time.sleep(pull_interval)
-            i = 0
 
         except AmsException as e:
-            if i == pull_nretry:
-                log.error('Giving up')
-                raise SystemExit(1)
-            else:
-                i += 1
-                log.warning('Retry %d after %d sleeping - %s' % (i, pull_retrysleep, repr(e)))
-                time.sleep(pull_retrysleep)
+            log.error(e)
+            log.error('Giving up')
+            raise SystemExit(1)
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
