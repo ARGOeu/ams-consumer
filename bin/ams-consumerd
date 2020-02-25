@@ -54,6 +54,7 @@ def doMainProgram():
         try:
             for id, msg in ams.pull_sub(subscriptions, msg_num,
                                         retry=pull_nretry,
+                                        return_immediately=True,
                                         retrysleep=pull_retrysleep,
                                         timeout=timeout):
                 ackIds.append(id)
