@@ -67,7 +67,8 @@ def doMainProgram():
             avroWriter.processMessages(avroMsg)
 
             if ackIds:
-                ams.ack_sub(subscriptions, ackIds, timeout=timeout)
+                ams.ack_sub(subscriptions, ackIds, retry=pull_nretry,
+                            retrysleep=pull_retrysleep, timeout=timeout)
                 ackIds = []
 
             time.sleep(pull_interval)
@@ -76,6 +77,7 @@ def doMainProgram():
             log.error(e)
             log.error('Giving up')
             raise SystemExit(1)
+
 
 def startDaemon(context_daemon):
     if context_daemon.pidfile.is_locked and not context_daemon.pidfile.i_am_locking():
