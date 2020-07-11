@@ -4,8 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ams-consumerd -d start -c /etc/argo-ams-consumer/ams-consumer.conf 
-ExecStop=/usr/bin/ams-consumerd -d stop -c /etc/argo-ams-consumer/ams-consumer.conf 
+ExecStart=/usr/bin/ams-consumerd -c /etc/argo-ams-consumer/ams-consumer.conf
+KillMode=process
+StandardError=syslog
 
 [Install]
 WantedBy=multi-user.target
