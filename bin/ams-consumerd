@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import errno
-import hashlib
-import os
 import signal
 import sys
 import time
@@ -23,11 +20,9 @@ timeout = None
 
 
 def doMainProgram():
-    def sigterm_handler(signum, frame):
-        print('SIGTERM received')
-
     config = singleton.getConfig()
     log = singleton.getLog()
+    ev_sigterm = singleton.getEventSigTerm()
     ams = ArgoMessagingService(endpoint=config.getOption(AmsConsumerConfig.AMS, 'Host'),
                                token=config.getOption(AmsConsumerConfig.AMS, 'Token'),
                                project=config.getOption(AmsConsumerConfig.AMS, 'Project'))
@@ -49,35 +44,43 @@ def doMainProgram():
 
     while True:
         avroMsg = {}
-        try:
-            for id, msg in ams.pull_sub(subscriptions, msg_num,
-                                        retry=pull_nretry,
-                                        return_immediately=True,
-                                        retrysleep=pull_retrysleep,
-                                        timeout=timeout):
-                ackIds.append(id)
-                singleton.incrementMsgCount()
-                msgDate = msg.get_attr()['partition_date']
-                if msgDate not in avroMsg:
-                    avroMsg[msgDate] = list()
-                avroMsg[msgDate].append(msg.get_data())
+        if not ev_sigterm.is_set():
+            try:
+                for id, msg in ams.pull_sub(subscriptions, msg_num,
+                                            retry=pull_nretry,
+                                            return_immediately=True,
+                                            retrysleep=pull_retrysleep,
+                                            timeout=timeout):
+                    ackIds.append(id)
+                    singleton.incrementMsgCount()
+                    msgDate = msg.get_attr()['partition_date']
+                    if msgDate not in avroMsg:
+                        avroMsg[msgDate] = list()
+                    avroMsg[msgDate].append(msg.get_data())
 
-            avroWriter.processMessages(avroMsg)
+                avroWriter.processMessages(avroMsg)
 
-            if ackIds:
-                ams.ack_sub(subscriptions, ackIds, retry=pull_nretry,
-                            retrysleep=pull_retrysleep, timeout=timeout)
-                ackIds = []
+                if ackIds:
+                    ams.ack_sub(subscriptions, ackIds, retry=pull_nretry,
+                                retrysleep=pull_retrysleep, timeout=timeout)
+                    ackIds = []
 
-            time.sleep(pull_interval)
+                time.sleep(pull_interval)
 
-        except AmsException as e:
-            log.error(e)
-            log.error('Giving up')
+            except AmsException as e:
+                log.error(e)
+                log.error('Giving up')
+                raise SystemExit(1)
+        else:
+            log.info('SIGTERM received - Exiting...')
             raise SystemExit(1)
 
 
 def main():
+    def sigterm_handler(signum, frame):
+        ev = singleton.getEventSigTerm()
+        ev.set()
+
     parser = argparse.ArgumentParser(prog=PROG_NAME + 'd')
     parser.add_argument('-c', dest='config', type=str, required=True, help='config file')
     args = parser.parse_args()
@@ -90,6 +93,8 @@ def main():
 
     global singleton
     singleton = SharedSingleton(ac_config, logger)
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     try:
         doMainProgram()
