@@ -31,7 +31,7 @@ class AvroWriter:
 
 
     def processMessages(self, msgList):
-        for msgDate, msgPayloads in msgList.iteritems():
+        for msgDate, msgPayloads in msgList.items():
             fileWriter = self.getFileWriter(msgDate)
             for msg in msgPayloads:
                 msgContent = self.deserialize(msg)
