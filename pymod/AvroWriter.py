@@ -8,30 +8,28 @@ from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
 from io import BytesIO
 from datetime import datetime, timedelta
 
-class AvroWriter:
 
+class AvroWriter:
     _filename = None
     _errorFile = None
     _schema = None
     _config = None
     _avroFile = None
 
-
     def __init__(self):
         self._shared = SharedSingleton()
         self._config = self._shared.getConfig()
         self._log = self._shared.getLog()
         self._filename = (self._config.getOption(AmsConsumerConfig.OUTPUT, 'Directory') + '/' +
-                        self._config.getOption(AmsConsumerConfig.OUTPUT, 'Filename'))
+                          self._config.getOption(AmsConsumerConfig.OUTPUT, 'Filename'))
 
         self._errorFile = (self._config.getOption(AmsConsumerConfig.OUTPUT, 'Directory') + '/' +
-                        self._config.getOption(AmsConsumerConfig.OUTPUT, 'ErrorFilename'))
+                           self._config.getOption(AmsConsumerConfig.OUTPUT, 'ErrorFilename'))
 
         self.loadSchema(self._config.getOption(AmsConsumerConfig.GENERAL, 'AvroSchema'))
 
-
     def processMessages(self, msgList):
-        for msgDate, msgPayloads in msgList.iteritems():
+        for msgDate, msgPayloads in msgList.items():
             fileWriter = self.getFileWriter(msgDate)
             for msg in msgPayloads:
                 msgContent = self.deserialize(msg)
@@ -39,7 +37,6 @@ class AvroWriter:
 
             fileWriter.close()
             self._avroFile.close()
-
 
     def loadSchema(self, schemaFile):
         try:
@@ -49,13 +46,11 @@ class AvroWriter:
             self._log.error(e)
             raise SystemExit(1)
 
-
     def deserialize(self, message):
         avro_reader = DatumReader(self._schema)
-        bytesio = BytesIO(message)
+        bytesio = BytesIO(message.encode('utf-8'))
         decoder = BinaryDecoder(bytesio)
         return avro_reader.read(decoder)
-
 
     def getFileWriter(self, datum):
         msgDate = datetime.strptime(datum, '%Y-%m-%d')
@@ -68,10 +63,10 @@ class AvroWriter:
             avroFilename = self._errorFile.replace('DATE', datum)
 
         if os.path.exists(avroFilename):
-            self._avroFile = open(avroFilename, 'a+')
+            self._avroFile = open(avroFilename, 'a+b')
             writer = DataFileWriter(self._avroFile, DatumWriter())
         else:
-            self._avroFile = open(avroFilename, 'w+')
+            self._avroFile = open(avroFilename, 'w+b')
             writer = DataFileWriter(self._avroFile, DatumWriter(), self._schema)
 
         return writer

@@ -1,10 +1,10 @@
-import ConfigParser
+import configparser
 import os
 import re
 import sys
 
-class AmsConsumerConfig(object):
 
+class AmsConsumerConfig(object):
     GENERAL = 'General'
     AMS = 'AMS'
     MSG_RETENTION = 'MsgRetention'
@@ -15,7 +15,7 @@ class AmsConsumerConfig(object):
         self._options = {}
 
     def parse(self):
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         if not os.path.exists(self._filename):
             sys.stderr.write('%s does not exist\n' % self._filename)
             raise SystemExit(1)
