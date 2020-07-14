@@ -48,7 +48,7 @@ class AvroWriter:
 
     def deserialize(self, message):
         avro_reader = DatumReader(self._schema)
-        bytesio = BytesIO(message.encode('utf-8'))
+        bytesio = BytesIO(message)
         decoder = BinaryDecoder(bytesio)
         return avro_reader.read(decoder)
 
