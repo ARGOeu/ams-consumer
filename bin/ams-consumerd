@@ -46,11 +46,11 @@ def doMainProgram():
         avroMsg = {}
         if not ev_sigterm.is_set():
             try:
-                for id, msg in ams.pull_sub(subscriptions, msg_num,
-                                            retry=pull_nretry,
-                                            return_immediately=True,
-                                            retrysleep=pull_retrysleep,
-                                            timeout=timeout):
+                for msg in ams.pullack_sub(subscriptions, msg_num,
+                                           retry=pull_nretry,
+                                           return_immediately=True,
+                                           retrysleep=pull_retrysleep,
+                                           timeout=timeout):
                     ackIds.append(id)
                     singleton.incrementMsgCount()
                     msgDate = msg.get_attr()['partition_date']
@@ -59,11 +59,6 @@ def doMainProgram():
                     avroMsg[msgDate].append(msg.get_data())
 
                 avroWriter.processMessages(avroMsg)
-
-                if ackIds:
-                    ams.ack_sub(subscriptions, ackIds, retry=pull_nretry,
-                                retrysleep=pull_retrysleep, timeout=timeout)
-                    ackIds = []
 
                 time.sleep(pull_interval)
 
