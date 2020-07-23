@@ -25,5 +25,5 @@ setup(
     description='argo-ams-consumer fetchs metric result messages from Argo Messaging System',
     data_files=[('/etc/argo-ams-consumer', ['config/ams-consumer.conf', 'config/metric_data.avsc']),
                 ('/usr/bin/', ['bin/ams-consumerd']),
-                ('/usr/lib/systemd/system/', ['init/ams-consumer.service'])]
+                ('/usr/lib/systemd/system/', ['init/ams-consumer@.service', 'init/ams-consumers.target'])]
 )
