@@ -8,7 +8,7 @@ Component is mainly serving for redundancy/backup of metric results within ARGO 
 
 ## Installation
 
-Component is supported on Centos 6 and Centos 7. RPM packages and all needed dependencies are available in ARGO repositories so installation of component simply narrows down to installing a package:
+Component is supported on Centos 7. RPM packages and all needed dependencies are available in ARGO repositories so installation of component simply narrows down to installing a package:
 
 	yum install -y argo-ams-consumer 
 
@@ -18,16 +18,16 @@ For its functioning, component depends on:
 - `python-argparse` - ease build and parse of command line arguments
 - `python-daemon` - ease daemonizing of component 
 
-| File Types        | Destination                                        |
-|-------------------|----------------------------------------------------|
-| Configuration     | `/etc/argo-ams-consumer/ams-consumer.conf`         |
-| Avro Schema       | `/etc/argo-ams-consumer/metric_data.avsc`          |
-| Daemon component  | `/usr/bin/ams-consumerd`                           |
-| Init script (C6)  | `/etc/init.d/ams-consumer `                        |
-| Service unit (C7) | `/usr/lib/systemd/system/ams-consumer.service`     |
-| Pid files         | `/var/run/argo-ams-consumer/`                      |
-| Log files         | `/var/log/argo-ams-consumer/`                      |
-| Daily logs        | `/var/lib/argo-ams-consumer/`                      |
+| File Types           | Destination                                        |
+|-------------------   |----------------------------------------------------|
+| Configuration        | `/etc/argo-ams-consumer/ams-consumer.conf`         |
+| Avro Schema          | `/etc/argo-ams-consumer/metric_data.avsc`          |
+| Daemon component     | `/usr/bin/ams-consumerd`                           |
+| Service unit         | `/usr/lib/systemd/system/ams-consumer@.service`    |
+| Target (units group) | `/usr/lib/systemd/system/ams-consumers.target`     |
+| Pid files            | `/var/run/argo-ams-consumer/`                      |
+| Log files            | `/var/log/argo-ams-consumer/`                      |
+| Daily logs           | `/var/lib/argo-ams-consumer/`                      |
 
 ## Configuration
 
@@ -95,8 +95,6 @@ Each tenant is represented with its own set of metric results meaning that AMS c
 1) created separate config file `/etc/argo-ams-consumer/ams-consumer-tenant.conf` with changed settings in `[AMS]` and `[Output]` section at least:
 	- change `Project`, `Subscription`, `Token`
 	- change output directory to `/var/lib/argo-ams-consumer-tenant/` that needs to be manually created before
-2) for Centos7, create a new init/unit service file `/usr/lib/systemd/system/ams-consumer-tenant.service` with passed newly created config file:
-	- change `ExecStart` and `ExecStop` to point to new configuration, for example `ExecStart=/usr/bin/ams-consumerd -d start -c /etc/argo-ams-consumer/ams-consumer-tenat.conf`
-	- reload SystemD configuration to register new service unit file `systemctl daemon-reload` 
-
-For Centos 6, similar steps goes with its init file `/etc/init.d/ams-consumer`. 
+2) edit SystemD target that references and groups all units `/usr/lib/systemd/system/ams-consumers.target` by adding new unit in `Requires=... ams-consumer@tenant.service ...`
+3) reload SystemD configuration to register changes in target - `systemctl daemon-reload` 
+4) start new unit with `systemctl start ams-consumers.target` 
