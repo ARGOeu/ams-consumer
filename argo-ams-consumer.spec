@@ -49,17 +49,18 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_sharedstatedir}/%{name}/
 %dir %{_localstatedir}/log/%{name}/
 %dir %{_localstatedir}/run/%{name}/
 %config(noreplace) %{_sysconfdir}/%{name}/ams-consumer.conf
-%{_unitdir}/ams-consumer.service
+%{_unitdir}/ams-consumer@.service
+%{_unitdir}/ams-consumers.target
 %{python3_sitelib}/*
 
 %post
-%systemd_post ams-consumer.service
+%systemd_post ams-consumers.target
 
 %postun
-%systemd_postun_with_restart ams-consumer.service
+%systemd_postun_with_restart ams-consumers.target
 
 %preun
-%systemd_preun ams-consumer.service
+%systemd_preun ams-consumers.target
 
 %changelog
 * Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr>, Konstantinos Kagkelidis <kaggis@gmail.com> - 1.1.0-1%{?dist}
