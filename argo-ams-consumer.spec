@@ -63,6 +63,11 @@ install --directory --mode 755 $RPM_BUILD_ROOT/%{_sharedstatedir}/%{name}/
 %systemd_preun ams-consumers.target
 
 %changelog
+* Tue Sep 8 2020 Daniel Vrcic <dvrcic@srce.hr> - 2.0.0-1%{?dist}
+- ARGO-2080 Refactor AMS clients to use retry ams-library feature
+- ARGO-2261 ams-consumer retry on ack_sub also
+- ARGO-2513 Drop Centos6/Python2 support
+- ARGO-2527 Use systemd instances for spawning of multiple tenant ams-consumers
 * Fri Nov 8 2019 Daniel Vrcic <dvrcic@srce.hr>, Konstantinos Kagkelidis <kaggis@gmail.com> - 1.1.0-1%{?dist}
 - Fix dash typo in consumer systemd service file
 - ARGO-1262 Extend consumer schema with actual_data field
