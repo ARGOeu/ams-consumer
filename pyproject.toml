@@ -43,7 +43,7 @@ argo_ams_consumer = "pymod"
 
 [tool.setuptools.data-files]
 "" = ["pyproject.toml", "poetry.lock"]
-"etc" = ["etc/*.conf.template", "config/metric_data.avsc"]
+"etc" = ["config/*.conf.template", "config/metric_data.avsc"]
 "usr/bin" = ["bin/ams-consumerd"]
 "usr/lib/systemd/system" = ["init/ams-consumer@.service", "init/ams-consumers.target"]
 
