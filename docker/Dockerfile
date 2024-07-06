@@ -45,6 +45,7 @@ VOLUME [ "/sys/fs/cgroup" ]
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN echo "Defaults	env_keep += \"PYTHONPATH\"" >> /etc/sudoers
 USER user
+COPY chezmoi-config-apply.sh /home/user
 WORKDIR /home/user
 RUN curl -sfL https://git.io/chezmoi | sh
 CMD ["/sbin/init"]

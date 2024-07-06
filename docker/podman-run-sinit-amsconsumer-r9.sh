@@ -1,5 +1,6 @@
 #!/bin/bash
 
+VENV="/opt/ams-consumer/"
 AMSCONSUMER_SOURCE="${HOME}/my_work/srce/git.ams-consumer/ams-consumer"
 
 podman run \
@@ -10,14 +11,14 @@ podman run \
 --log-opt max-size=10m \
 -v /dev/log:/dev/log \
 -v /etc/localtime:/etc/localtime \
+-h amsconsumer-r9 \
+--net host \
+--name amsconsumer-r9 \
 \
 -v "${HOME}":/mnt/ \
 -v "${HOME}"/.ssh:/home/user/.ssh/ \
 -v "${AMSCONSUMER_SOURCE}":/home/user/amsconsumer-source \
 \
--h amsconsumer-r9 \
---net host \
---name amsconsumer-r9 \
 -u root \
 --rm -ti \
 localhost/ams-consumer-r9
