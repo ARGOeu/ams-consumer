@@ -46,6 +46,8 @@ argo_ams_consumer = "pymod"
 "etc" = ["config/*.conf.template", "config/metric_data.avsc"]
 "usr/bin" = ["bin/ams-consumerd"]
 "usr/lib/systemd/system" = ["init/ams-consumer@.service", "init/ams-consumers.target"]
+"var/lib/" = ["helpers/empty"]
+"var/log/" = ["helpers/empty"]
 
 [tool.setuptools.dynamic]
 version = { attr = "version.vernum" }
