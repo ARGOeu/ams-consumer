@@ -4,7 +4,7 @@ VENV = /opt/ams-consumer/
 [General]
 LogName = argo-ams-consumer
 ReportWritMsgEveryHours = 24
-AvroSchema = %(VENV)s/etc/argo-ams-consumer/metric_data.avsc
+AvroSchema = %(VENV)s/etc/metric_data.avsc
 
 [AMS]
 Host = messaging-devel.argo.grnet.gr
@@ -22,6 +22,6 @@ PastDaysOk = 3
 FutureDaysOk = 1
 
 [Output]
-Directory = %(VENV)s/var/lib/argo-ams-consumer
+Directory = %(VENV)s/var/lib/
 Filename = argo-consumer_log_DATE.avro
 ErrorFilename = argo-consumer_error_log_DATE.avro
