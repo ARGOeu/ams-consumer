@@ -21,8 +21,9 @@ podman run \
 \
 -v "${AMSCONSUMER_SOURCE}"/bin/:"${VENV}"/usr/bin:ro \
 -v "${AMSCONSUMER_SOURCE}"/pymod/:"${VENV}"/lib/python3.9/site-packages/argo_ams_consumer:ro \
--v "${AMSCONSUMER_SOURCE}"/init/ams-consumer@.service:/usr/lib/systemd/system/ams-consumer@.service \
--v "${AMSCONSUMER_SOURCE}"/init/ams-consumers.target:/usr/lib/systemd/system/ams-consumers.target \
+-v "${AMSCONSUMER_SOURCE}"/init/ams-consumer@.service:/usr/lib/systemd/system/ams-consumer@.service:ro \
+-v "${AMSCONSUMER_SOURCE}"/init/ams-consumers.target:/usr/lib/systemd/system/ams-consumers.target:ro \
+-v "${AMSCONSUMER_SOURCE}"/config/:"${VENV}"/etc:ro \
 \
 -v "${AMSCONSUMER_SOURCE}"/poetry.lock:${VENV}/poetry.lock \
 -v "${AMSCONSUMER_SOURCE}"/pyproject.toml:${VENV}/pyproject.toml \
