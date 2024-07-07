@@ -4,7 +4,6 @@ RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user -s /b
 RUN dnf -y update; dnf clean all
 RUN dnf -y install epel-release rocky-repos && \
     dnf -y install \
-			procps-ng \
       ack \
       ctags \
       fortune-mod \
@@ -15,10 +14,12 @@ RUN dnf -y install epel-release rocky-repos && \
       mc \
       net-tools \
       passwd \
+      procps-ng \
       python3-devel \
       python3-pip \
       python3-setuptools \
       rpmdevtools \
+      rsync \
       sudo \
       the_silver_searcher \
       tmux \
@@ -43,7 +44,7 @@ RUN chown -R user:user /opt/ams-consumer
 RUN passwd -d root
 VOLUME [ "/sys/fs/cgroup" ]
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-RUN echo "Defaults	env_keep += \"PYTHONPATH\"" >> /etc/sudoers
+RUN echo "Defaults  env_keep += \"PYTHONPATH\"" >> /etc/sudoers
 USER user
 COPY chezmoi-config-apply.sh /home/user
 WORKDIR /home/user

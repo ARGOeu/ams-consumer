@@ -18,6 +18,8 @@ podman run \
 -v "${HOME}":/mnt/ \
 -v "${HOME}"/.ssh:/home/user/.ssh/ \
 -v "${AMSCONSUMER_SOURCE}":/home/user/amsconsumer-source \
+-v ./pysitepkg:/home/user/pysitepkg \
+-v ./syncsite.sh:/home/user/syncsite.sh \
 \
 -v "${AMSCONSUMER_SOURCE}"/bin/:"${VENV}"/usr/bin:ro \
 -v "${AMSCONSUMER_SOURCE}"/pymod/:"${VENV}"/lib/python3.9/site-packages/argo_ams_consumer:ro \
