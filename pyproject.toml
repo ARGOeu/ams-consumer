@@ -13,6 +13,13 @@ optional = true
 build = "*"
 ipdb = "*"
 
+[tool.poetry.group.devel]
+optional = true
+
+[tool.poetry.group.devel-producer.dependencies]
+messaging = "*"
+pytz = "*"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
