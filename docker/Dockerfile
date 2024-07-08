@@ -1,0 +1,52 @@
+FROM rockylinux:9
+MAINTAINER dvrcic@srce.hr
+RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user -s /bin/zsh
+RUN dnf -y update; dnf clean all
+RUN dnf -y install epel-release rocky-repos && \
+    dnf -y install \
+      ack \
+      ctags \
+      fortune-mod \
+      git \
+      glibc-all-langpacks \
+      iproute \
+      make \
+      mc \
+      net-tools \
+      passwd \
+      procps-ng \
+      python3-devel \
+      python3-pip \
+      python3-setuptools \
+      rpmdevtools \
+      rsync \
+      sudo \
+      the_silver_searcher \
+      tmux \
+      vim \
+      wget \
+      yum-utils \
+      zsh
+RUN crb enable && dnf --enablerepo=devel install -y ncurses-compat-libs
+RUN pip install -U pip; pip3 install -U pip
+RUN python3.9 -m venv /opt/poetry-tool/
+RUN sh -c '\
+  . /opt/poetry-tool/bin/activate \
+  && pip install -U pip \
+  && pip install -U setuptools==69.2.0 \
+  && pip install -U poetry'
+RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
+RUN python3.9 -m venv /opt/ams-consumer/
+RUN sh -c '\
+  . /opt/ams-consumer/bin/activate \
+  && pip install -U pip'
+RUN chown -R user:user /opt/ams-consumer
+RUN passwd -d root
+VOLUME [ "/sys/fs/cgroup" ]
+RUN echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+RUN echo "Defaults  env_keep += \"PYTHONPATH\"" >> /etc/sudoers
+USER user
+COPY chezmoi-config-apply.sh /home/user
+WORKDIR /home/user
+RUN curl -sfL https://git.io/chezmoi | sh
+CMD ["/sbin/init"]

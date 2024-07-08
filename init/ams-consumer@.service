@@ -5,9 +5,9 @@ PartOf=ams-consumers.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ams-consumerd -c /etc/argo-ams-consumer/ams-consumer-%i.conf
+Environment=VIRTUAL_ENV=/opt/ams-consumer/
+ExecStart=/opt/ams-consumer/bin/python /opt/ams-consumer/usr/bin/ams-consumerd -c /opt/ams-consumer/etc/ams-consumer-%i.conf
 KillMode=process
-StandardError=syslog
 SyslogIdentifier=ams-consumer-%i
 
 [Install]
