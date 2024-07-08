@@ -13,7 +13,7 @@ optional = true
 build = "*"
 ipdb = "*"
 
-[tool.poetry.group.devel]
+[tool.poetry.group.devel-producer]
 optional = true
 
 [tool.poetry.group.devel-producer.dependencies]
