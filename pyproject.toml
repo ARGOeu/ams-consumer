@@ -1,0 +1,53 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+argo-ams-library = "*"
+avro = "*"
+
+[tool.poetry.group.devel]
+optional = true
+
+[tool.poetry.group.devel.dependencies]
+build = "*"
+ipdb = "*"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ams-consumer"
+dynamic = ["version"]
+authors = [
+	{ name = "Daniel Vrcic", email = "dvrcic@srce.hr" }
+]
+description = "AMS consumer fetchs metric results from Argo Messaging Service and stores them in avro serialized files"
+classifiers = [
+	"Development Status :: 5 - Production/Stable",
+	"License :: OSI Approved :: Apache Software License",
+	"Operating System :: POSIX",
+	"Programming Language :: Python :: 3.9",
+	"Intended Audience :: Developers",
+]
+
+[tool.setuptools]
+packages = [
+	'argo_ams_consumer',
+]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+argo_ams_consumer = "pymod"
+
+[tool.setuptools.data-files]
+"" = ["pyproject.toml", "poetry.lock"]
+"etc" = ["config/*.conf.template", "config/metric_data.avsc"]
+"usr/bin" = ["bin/ams-consumerd"]
+"usr/lib/systemd/system" = ["init/ams-consumer@.service", "init/ams-consumers.target"]
+"var/lib/" = ["helpers/empty"]
+"var/log/" = ["helpers/empty"]
+
+[tool.setuptools.dynamic]
+version = { attr = "version.vernum" }

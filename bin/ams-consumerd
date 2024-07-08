@@ -4,6 +4,7 @@ import argparse
 import signal
 import sys
 import time
+import os
 
 from datetime import datetime
 from argo_ams_consumer.AmsConsumerConfig import AmsConsumerConfig
@@ -14,8 +15,8 @@ from argo_ams_consumer.AvroWriter import AvroWriter
 from argo_ams_library import ArgoMessagingService, AmsException
 
 PROG_NAME = 'argo-ams-consumer'
-pid_dir = '/var/run/' + PROG_NAME + '/'
-log_dir = '/var/log/' + PROG_NAME + '/'
+pid_dir = os.environ['VIRTUAL_ENV'] + '/var/run/' + PROG_NAME + '/'
+log_dir = os.environ['VIRTUAL_ENV'] + '/var/log/' + PROG_NAME + '/'
 timeout = None
 
 
@@ -39,6 +40,7 @@ def doMainProgram():
     reportThread = ReportThread()
     reportThread.daemon = True
     reportThread.start()
+
 
     avroWriter = AvroWriter()
 
