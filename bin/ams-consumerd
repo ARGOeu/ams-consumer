@@ -15,8 +15,7 @@ from argo_ams_consumer.AvroWriter import AvroWriter
 from argo_ams_library import ArgoMessagingService, AmsException
 
 PROG_NAME = 'argo-ams-consumer'
-pid_dir = os.environ['VIRTUAL_ENV'] + '/var/run/' + PROG_NAME + '/'
-log_dir = os.environ['VIRTUAL_ENV'] + '/var/log/' + PROG_NAME + '/'
+log_dir = os.environ['VIRTUAL_ENV'] + '/var/log/'
 timeout = None
 
 
@@ -40,7 +39,6 @@ def doMainProgram():
     reportThread = ReportThread()
     reportThread.daemon = True
     reportThread.start()
-
 
     avroWriter = AvroWriter()
 
