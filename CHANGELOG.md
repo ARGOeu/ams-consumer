@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0] - 2025-07-17
+
+### Added
+
+* Handle project and wheel packaging with Poetry tool
+* Podman and Docker development environment
+
 ## [2.0.0] - 2020-09-08
 
 ### Added
